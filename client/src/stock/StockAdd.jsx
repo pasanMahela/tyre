@@ -100,7 +100,7 @@ function StockAdd() {
         >
           <div className="flex">
             <Input 
-              className="flex-grow rounded-l-md border-r-0"
+              className="flex-grow rounded-l-md border-r-0 mr-36"
               disabled={loading}
             />
             <Button 
