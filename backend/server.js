@@ -1,8 +1,10 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require('dotenv');
+const cors = require('cors');  // Import cors package
 
 const itemRoutes = require('./routes/itemRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
 dotenv.config();
 
 const app = express();
@@ -11,6 +13,8 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware to parse JSON bodies
 app.use(express.json());
+
+app.use(cors()); // Use cors middleware
 
 mongoose
   .connect(process.env.MONGO, {
@@ -26,6 +30,7 @@ mongoose
 
 // Routes
 app.use('/api/item', itemRoutes);
+app.use('/api/category', categoryRoutes); 
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
