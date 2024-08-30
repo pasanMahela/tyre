@@ -2,7 +2,7 @@ const Item = require('../models/item');
 
 // Function to generate the next item code
 const generateItemCode = async () => {
-    let nextCode = 'rt1'; // Default starting code
+    let nextCode = '1rt'; // Default starting code
 
     try {
         while (true) {
@@ -12,7 +12,7 @@ const generateItemCode = async () => {
             // Increment code if it exists
             const lastNumber = parseInt(nextCode.substring(2), 10);
             const nextNumber = lastNumber + 1;
-            nextCode = `rt${nextNumber}`;
+            nextCode = `${nextNumber}rt`;
         }
     } catch (error) {
         throw new Error('Error generating item code: ' + error.message);
