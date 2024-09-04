@@ -1,32 +1,38 @@
 const Item = require('../models/item');
+const Counter = require('../models/Counter'); // Adjust the path as necessary
 
 // Function to generate the next item code
 const generateItemCode = async () => {
-    let nextCode = '1rt'; // Default starting code
-
     try {
-        while (true) {
-            const latestItem = await Item.findOne({ itemCode: nextCode }).exec();
-            if (!latestItem) break; // If no item with the code, it's unique
+        const counter = await Counter.findByIdAndUpdate(
+            'itemCode',
+            { $inc: { sequenceValue: 1 } },
+            { new: true, upsert: true }
+        );
 
-            // Increment code if it exists
-            const lastNumber = parseInt(nextCode.substring(2), 10);
-            const nextNumber = lastNumber + 1;
-            nextCode = `${nextNumber}rt`;
+        if (!counter) {
+            throw new Error('Counter document not found or failed to create.');
         }
+
+        // Log the counter details for debugging
+        console.log('Counter document:', counter);
+
+        const nextCode = `${counter.sequenceValue}rt`;
+        return nextCode;
     } catch (error) {
+        console.error('Error generating item code:', error.message);
         throw new Error('Error generating item code: ' + error.message);
     }
-
-    return nextCode;
 };
+
+
 
 exports.addItem = async (req, res) => {
     try {
-        const newItemCode = await generateItemCode();
+        const newItemCode = await generateItemCode(); // Generate the new item code
 
         const newItem = new Item({
-            itemCode: newItemCode,
+            itemCode: newItemCode, // Use the generated code
             itemName: req.body.itemName,
             itemCompany: req.body.itemCompany,
             description: req.body.description,
@@ -47,12 +53,7 @@ exports.addItem = async (req, res) => {
             item: newItem 
         });
     } catch (error) {
-        if (error.code === 11000) {
-            res.status(409).json({ error: 'Item code already exists.' });
-        } else {
-            console.error('Error adding item:', error.message);
-            res.status(500).json({ error: 'Failed to add item. ' + error.message });
-        }
+        res.status(500).json({ error: 'Failed to add item. ' + error.message });
     }
 };
 
