@@ -1,6 +1,6 @@
 // controllers/saleController.js
 const Sale = require('../models/Sale');
-const Item = require('../models/item'); // Assuming you have an Item model
+const Item = require('../models/item'); // Ensure you have the correct path to the Item model
 
 exports.createSale = async (req, res) => {
   const session = await Sale.startSession();
@@ -9,10 +9,18 @@ exports.createSale = async (req, res) => {
   try {
     const { items, totalAmount, paymentType, customerName, paidAmount } = req.body;
 
-    // Calculate the balance amount
+    // Validate input
+    if (!items || items.length === 0) {
+      throw new Error('No items in the sale.');
+    }
+    if (paidAmount < 0 || totalAmount < 0) {
+      throw new Error('Amounts must be positive.');
+    }
+
+    // Calculate balance
     const balanceAmount = totalAmount - paidAmount;
 
-    // Create the sale object
+    // Create sale object
     const sale = new Sale({
       items,
       totalAmount,
@@ -22,39 +30,42 @@ exports.createSale = async (req, res) => {
       balanceAmount,
     });
 
-    // Save the sale to the database
+    // Save the sale and update stock
     const savedSale = await sale.save({ session });
 
-    // Update the current stock of each item
     for (const soldItem of items) {
       const item = await Item.findOne({ itemCode: soldItem.itemCode }).session(session);
-      
+
       if (!item) {
-        throw new Error(`Item with code ${soldItem.itemCode} not found`);
-      }
-      
-      // Ensure stock is sufficient
-      if (item.currentStock < soldItem.quantity) {
-        throw new Error(`Not enough stock for item ${soldItem.itemName}`);
+        throw new Error(`Item with code ${soldItem.itemCode} not found.`);
       }
 
-      // Reduce the current stock by the quantity sold
+      // Check for stock availability
+      if (item.currentStock < soldItem.quantity) {
+        throw new Error(`Insufficient stock for item: ${soldItem.itemName}.`);
+      }
+
+      // Update stock
       item.currentStock -= soldItem.quantity;
       await item.save({ session });
     }
 
-    // Commit the transaction
+    // Commit transaction
     await session.commitTransaction();
     session.endSession();
 
-    // Respond with the saved sale
-    res.status(201).json(savedSale);
+    res.status(201).json({
+      message: 'Sale completed successfully!',
+      sale: savedSale,
+    });
   } catch (error) {
-    // Rollback the transaction in case of error
+    // Rollback transaction on error
     await session.abortTransaction();
     session.endSession();
 
-    console.error('Error creating sale:', error);
-    res.status(500).json({ message: 'Error creating sale', error: error.message });
+    res.status(500).json({
+      message: 'Error processing the sale.',
+      error: error.message,
+    });
   }
 };
