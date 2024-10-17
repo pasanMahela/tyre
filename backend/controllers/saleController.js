@@ -8,19 +8,19 @@ exports.createSale = async (req, res) => {
 
   try {
     const { items, totalAmount, paymentType, customerName, paidAmount } = req.body;
-
-    // Validate input
+  
+    console.log("Received sale data: ", req.body);
+  
     if (!items || items.length === 0) {
       throw new Error('No items in the sale.');
     }
+  
     if (paidAmount < 0 || totalAmount < 0) {
       throw new Error('Amounts must be positive.');
     }
-
-    // Calculate balance
+  
     const balanceAmount = totalAmount - paidAmount;
-
-    // Create sale object
+  
     const sale = new Sale({
       items,
       totalAmount,
@@ -29,43 +29,42 @@ exports.createSale = async (req, res) => {
       paidAmount,
       balanceAmount,
     });
-
-    // Save the sale and update stock
+  
     const savedSale = await sale.save({ session });
-
+  
+    console.log("Sale saved successfully, updating stock...");
+  
     for (const soldItem of items) {
       const item = await Item.findOne({ itemCode: soldItem.itemCode }).session(session);
-
       if (!item) {
         throw new Error(`Item with code ${soldItem.itemCode} not found.`);
       }
-
-      // Check for stock availability
       if (item.currentStock < soldItem.quantity) {
         throw new Error(`Insufficient stock for item: ${soldItem.itemName}.`);
       }
-
-      // Update stock
       item.currentStock -= soldItem.quantity;
       await item.save({ session });
     }
-
-    // Commit transaction
+  
     await session.commitTransaction();
     session.endSession();
-
+  
+    console.log("Transaction committed successfully");
+  
     res.status(201).json({
       message: 'Sale completed successfully!',
       sale: savedSale,
     });
   } catch (error) {
-    // Rollback transaction on error
+    console.error("Error processing the sale: ", error.message);
+  
     await session.abortTransaction();
     session.endSession();
-
+  
     res.status(500).json({
       message: 'Error processing the sale.',
       error: error.message,
     });
   }
+  
 };
