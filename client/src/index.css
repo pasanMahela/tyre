@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.light-blue-row {
+    background-color: #d0ebed; /* Change this to your desired light blue color */
+  }
+  

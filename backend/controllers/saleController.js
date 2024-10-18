@@ -1,70 +1,48 @@
-// controllers/saleController.js
-const Sale = require('../models/Sale');
-const Item = require('../models/item'); // Ensure you have the correct path to the Item model
+// backend/controllers/saleController.js
+const mongoose = require('mongoose'); // Import mongoose
+const Sale = require('../models/Sale'); // Import your Sale model
+const Item = require('../models/item'); // Import your Item model
 
 exports.createSale = async (req, res) => {
-  const session = await Sale.startSession();
+  const session = await mongoose.startSession(); // Start a session for transaction
   session.startTransaction();
 
   try {
-    const { items, totalAmount, paymentType, customerName, paidAmount } = req.body;
-  
-    console.log("Received sale data: ", req.body);
-  
-    if (!items || items.length === 0) {
-      throw new Error('No items in the sale.');
+    const saleData = req.body;
+    
+    // Create a new sale
+    const sale = new Sale(saleData);
+    await sale.save({ session });
+
+    // Update stock for each item sold
+    for (const item of saleData.items) {
+      await Item.findOneAndUpdate(
+        { itemCode: item.itemCode },
+        { $inc: { currentStock: -item.quantity } }, // Decrease the stock
+        { session }
+      );
     }
-  
-    if (paidAmount < 0 || totalAmount < 0) {
-      throw new Error('Amounts must be positive.');
-    }
-  
-    const balanceAmount = totalAmount - paidAmount;
-  
-    const sale = new Sale({
-      items,
-      totalAmount,
-      paymentType,
-      customerName,
-      paidAmount,
-      balanceAmount,
-    });
-  
-    const savedSale = await sale.save({ session });
-  
-    console.log("Sale saved successfully, updating stock...");
-  
-    for (const soldItem of items) {
-      const item = await Item.findOne({ itemCode: soldItem.itemCode }).session(session);
-      if (!item) {
-        throw new Error(`Item with code ${soldItem.itemCode} not found.`);
-      }
-      if (item.currentStock < soldItem.quantity) {
-        throw new Error(`Insufficient stock for item: ${soldItem.itemName}.`);
-      }
-      item.currentStock -= soldItem.quantity;
-      await item.save({ session });
-    }
-  
+
+    // Commit the transaction
     await session.commitTransaction();
     session.endSession();
-  
-    console.log("Transaction committed successfully");
-  
-    res.status(201).json({
-      message: 'Sale completed successfully!',
-      sale: savedSale,
-    });
+
+    res.status(201).json(sale);
   } catch (error) {
-    console.error("Error processing the sale: ", error.message);
-  
-    await session.abortTransaction();
+    console.error(error);
+    await session.abortTransaction(); // Rollback transaction on error
     session.endSession();
-  
-    res.status(500).json({
-      message: 'Error processing the sale.',
-      error: error.message,
-    });
+    res.status(500).json({ message: 'Error saving sale data' });
   }
-  
+};
+
+
+exports.getSales = async (req, res) => {
+  try {
+    const sales = await Sale.find();
+    res.status(200).json(sales);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching sales data' });
+  }
 };

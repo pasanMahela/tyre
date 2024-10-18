@@ -46,8 +46,9 @@ mongoose
 // Routes
 app.use('/api/item', itemRoutes);
 app.use('/api/category', categoryRoutes); 
-// Use the sale routes
-app.use('/api', saleRoutes);
+
+// Routes
+app.use('/api/sales', saleRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

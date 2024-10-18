@@ -30,7 +30,7 @@ const Navbar = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
-                <Link to="/" className="text-3xl font-bold tracking-wider text-red-600">
+                <Link to="/" className="text-3xl font-bold tracking-wider text-red-500">
                   Ruhunu Tyre House
                 </Link>
               </div>
