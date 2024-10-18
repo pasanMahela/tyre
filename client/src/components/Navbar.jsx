@@ -1,95 +1,198 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaHome, FaBoxOpen, FaShoppingCart, FaEdit, FaBars, FaTimes } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { FaBars, FaTimes } from 'react-icons/fa';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const location = useLocation(); // to track page changes
+  const [dropdown, setDropdown] = useState({ inventory: false, reports: false, users: false });
 
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
+  const inventoryRef = useRef();
+  const reportsRef = useRef();
+  const usersRef = useRef();
+  const navbarRef = useRef();
+
+  const toggleMenu = () => setIsOpen((prev) => !prev);
+
+  const toggleDropdown = (key) => {
+    setDropdown((prevState) => ({
+      ...prevState,
+      [key]: !prevState[key],
+    }));
   };
 
   useEffect(() => {
-    // Close menu when route changes
-    setIsOpen(false);
-  }, [location]);
+    const handleClickOutside = (event) => {
+      if (
+        !inventoryRef.current?.contains(event.target) &&
+        !reportsRef.current?.contains(event.target) &&
+        !usersRef.current?.contains(event.target) &&
+        !navbarRef.current?.contains(event.target)
+      ) {
+        setDropdown({ inventory: false, reports: false, users: false });
+        setIsOpen(false);
+      }
+    };
 
-  const pageTransition = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -20 },
-    transition: { duration: 0.6 },
-  };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div {...pageTransition} key={location.pathname}>
-        <nav className="bg-custom-bg text-custom-blue shadow-md font-poppins">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center">
-                <Link to="/" className="text-3xl font-bold tracking-wider text-red-500">
-                  Ruhunu Tyre House
-                </Link>
-              </div>
-              <div className="hidden md:flex space-x-8">
-                <Link
-                  to="/"
-                  className="hover:bg-custom-blue hover:text-custom-bg px-5 py-2 rounded-lg transition-all duration-300 flex items-center"
-                >
-                  <FaHome className="inline-block mr-2" size={20} /> Home
-                </Link>
-                <Link
-                  to="/item-add"
-                  className="hover:bg-custom-blue hover:text-custom-bg px-5 py-2 rounded-lg transition-all duration-300 flex items-center"
-                >
-                  <FaBoxOpen className="inline-block mr-2" size={20} /> Add Item
-                </Link>
-                <Link
-                  to="/stock-view"
-                  className="hover:bg-custom-blue hover:text-custom-bg px-5 py-2 rounded-lg transition-all duration-300 flex items-center"
-                >
-                  <FaEdit className="inline-block mr-2" size={20} /> Stock View
-                </Link>
-                <Link
-                  to="/pos"
-                  className="hover:bg-custom-blue hover:text-custom-bg px-5 py-2 rounded-lg transition-all duration-300 flex items-center"
-                >
-                  <FaShoppingCart className="inline-block mr-2" size={20} /> POS
-                </Link>
-              </div>
-              <div className="md:hidden">
-                <button onClick={toggleMenu} className="text-custom-blue hover:text-gray-400" aria-expanded={isOpen} aria-label="Toggle navigation menu">
-                  {isOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
-                </button>
-              </div>
-            </div>
-          </div>
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="md:hidden bg-custom-bg"
+    <>
+      <nav ref={navbarRef} className="bg-gray-900 border-gray-200">
+        <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl p-4">
+          <Link to="/" className="flex items-center space-x-3 rtl:space-x-reverse">
+            <img src="https://flowbite.com/docs/images/logo.svg" className="h-8" alt="Logo" />
+            <span className="text-2xl font-semibold text-white">Ruhunu Tyre House</span>
+          </Link>
+
+          <div className="flex items-center space-x-6 rtl:space-x-reverse">
+            <Link
+              to="/login"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
             >
-              <Link to="/" className="block px-4 py-3 text-custom-blue hover:bg-custom-blue hover:text-custom-bg" onClick={toggleMenu}>
-                Home
-              </Link>
-              <Link to="/item-add" className="block px-4 py-3 text-custom-blue hover:bg-custom-blue hover:text-custom-bg" onClick={toggleMenu}>
-                Add Item
-              </Link>
-              <Link to="/stock-view" className="block px-4 py-3 text-custom-blue hover:bg-custom-blue hover:text-custom-bg" onClick={toggleMenu}>
-                Stock View
-              </Link>
-              <Link to="/pos" className="block px-4 py-3 text-custom-blue hover:bg-custom-blue hover:text-custom-bg" onClick={toggleMenu}>
+              Login
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      <nav className="bg-gray-800">
+        <div className="max-w-screen-xl px-4 py-4 mx-auto">
+          <div className="flex justify-between items-center">
+            <ul className="flex space-x-12 text-white">
+              <li>
+                <Link to="/pos" className="hover:underline">POS</Link>
+              </li>
+              <li>
+                <Link to="/stock-add" className="hover:underline">Add Stock</Link>
+              </li>
+              <li>
+                <Link to="/stock-view" className="hover:underline">View Stock</Link>
+              </li>
+
+              <li className="relative" ref={inventoryRef}>
+                <button onClick={() => toggleDropdown('inventory')} className="hover:underline">
+                  Inventory
+                </button>
+                {dropdown.inventory && (
+                  <div className="absolute top-full left-0 mt-2 bg-gray-700 text-white shadow-lg rounded-lg py-2 w-48">
+                    <Link to="/item-add" className="block px-4 py-2 hover:bg-gray-600">
+                      Add New Item
+                    </Link>
+                    <Link to="/item-edit" className="block px-4 py-2 hover:bg-gray-600">
+                      Edit Item
+                    </Link>
+                  </div>
+                )}
+              </li>
+
+              <li>
+                <Link to="/sales" className="hover:underline">Sales</Link>
+              </li>
+
+              <li className="relative" ref={reportsRef}>
+                <button onClick={() => toggleDropdown('reports')} className="hover:underline">
+                  Reports
+                </button>
+                {dropdown.reports && (
+                  <div className="absolute top-full left-0 mt-2 bg-gray-700 text-white shadow-lg rounded-lg py-2 w-48">
+                    <Link to="/reports/purchase" className="block px-4 py-2 hover:bg-gray-600">
+                      Purchase Reports
+                    </Link>
+                    <Link to="/reports/sales" className="block px-4 py-2 hover:bg-gray-600">
+                      Sales Reports
+                    </Link>
+                  </div>
+                )}
+              </li>
+
+              <li className="relative" ref={usersRef}>
+                <button onClick={() => toggleDropdown('users')} className="hover:underline">
+                  Users
+                </button>
+                {dropdown.users && (
+                  <div className="absolute top-full left-0 mt-2 bg-gray-700 text-white shadow-lg rounded-lg py-2 w-48">
+                    <Link to="/users/add" className="block px-4 py-2 hover:bg-gray-600">
+                      Add User
+                    </Link>
+                    <Link to="/users/view" className="block px-4 py-2 hover:bg-gray-600">
+                      View Users
+                    </Link>
+                  </div>
+                )}
+              </li>
+            </ul>
+
+            <button onClick={toggleMenu} className="md:hidden text-white">
+              {isOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {isOpen && (
+        <nav className="bg-gray-800 px-4 py-3">
+          <ul className="space-y-2 text-white">
+            <li>
+              <Link to="/pos" className="block hover:underline" onClick={toggleMenu}>
                 POS
               </Link>
-            </motion.div>
-          )}
+            </li>
+            <li>
+              <Link to="/stock-add" className="block hover:underline" onClick={toggleMenu}>
+                Add Stock
+              </Link>
+            </li>
+            <li>
+              <Link to="/stock-view" className="block hover:underline" onClick={toggleMenu}>
+                View Stock
+              </Link>
+            </li>
+
+            <li>
+              <button onClick={() => toggleDropdown('inventory')} className="hover:underline">
+                Inventory
+              </button>
+              {dropdown.inventory && (
+                <div className="pl-4">
+                  <Link to="/item-add" className="hover:underline" onClick={toggleMenu}>
+                    Add New Item
+                  </Link>
+                  <Link to="/item-edit" className="hover:underline" onClick={toggleMenu}>
+                    Edit Item
+                  </Link>
+                </div>
+              )}
+            </li>
+
+            <li>
+              <Link to="/sales" className="hover:underline" onClick={toggleMenu}>
+                Sales
+              </Link>
+            </li>
+
+            <li>
+              <button onClick={() => toggleDropdown('reports')} className="hover:underline">
+                Reports
+              </button>
+              {dropdown.reports && (
+                <div className="pl-4">
+                  <Link to="/reports/purchase" className="hover:underline" onClick={toggleMenu}>
+                    Purchase Reports
+                  </Link>
+                  <Link to="/reports/sales" className="hover:underline" onClick={toggleMenu}>
+                    Sales Reports
+                  </Link>
+                </div>
+              )}
+            </li>
+          </ul>
         </nav>
-      </motion.div>
-    </AnimatePresence>
+      )}
+    </>
   );
 };
 
