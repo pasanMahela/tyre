@@ -16,7 +16,7 @@ import {
   notification,
   Radio,
 } from 'antd';
-import { DollarOutlined, ExclamationCircleOutlined, DeleteOutlined, MinusOutlined } from '@ant-design/icons';
+import { DollarOutlined, ExclamationCircleOutlined, DeleteOutlined, MinusOutlined, PercentageOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import moment from 'moment';
 
@@ -219,38 +219,181 @@ function POS() {
     // Function to handle printing the bill
     const printBill = (saleData) => {
       const printWindow = window.open('', '_blank');
+    
+      const itemRows = saleData.items.map(item => `
+        <tr>
+          <td>${item.itemName}</td>
+          <td>${item.price.toFixed(2)}</td>
+          <td>${item.quantity}</td>
+          <td>Rs. ${(item.totalPrice).toFixed(2)}</td>
+        </tr>
+      `).join('');
+    
       printWindow.document.write(`
-        <html>
+        <html lang="en">
           <head>
-            <title>Print Bill</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Invoice</title>
+            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
             <style>
-              body { font-family: Arial, sans-serif; }
-              h2 { text-align: center; }
-              ul { list-style-type: none; padding: 0; }
-              li { margin: 5px 0; }
+              body {
+                font-family: 'Poppins', sans-serif;
+                margin: 0;
+                background-color: #f5f5f5;
+                color: #333;
+              }
+              .invoice-container {
+                max-width: 650px;
+                margin: 30px auto;
+                padding: 20px;
+                background-color: #fff;
+                border-radius: 8px;
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 10px;
+              }
+              .header h1 {
+                letter-spacing: 4px;
+                margin: 0;
+                font-weight: 600;
+                font-size: 24px;
+                color: #444;
+              }
+              .header p {
+                margin: 2px 0;
+                font-size: 14px;
+                color: #777;
+              }
+              .invoice-details {
+                text-align: right;
+                margin: 15px 0;
+                font-size: 14px;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+                background-color: #fdfdfd;
+              }
+              th, td {
+                padding: 12px;
+                border-bottom: 1px solid #e0e0e0;
+                text-align: left;
+              }
+              th {
+                background-color: #f7f7f7;
+                text-transform: uppercase;
+                font-size: 12px;
+                color: #555;
+              }
+              .total {
+                text-align: right;
+                font-weight: bold;
+                background-color: #fafafa;
+              }
+              .summary {
+                margin-top: 25px;
+                display: flex;
+                justify-content: space-between;
+                background-color: #f7f7f7;
+                padding: 15px;
+                border-radius: 8px;
+              }
+              .summary div {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                font-size: 15px;
+              }
+              .summary div strong {
+                font-weight: 600;
+                color: #444;
+              }
+              .summary .value {
+                text-align: right;
+              }
+              .thank-you {
+                text-align: center;
+                margin-top: 30px;
+                font-weight: 600;
+                font-size: 16px;
+                color: #4CAF50;
+              }
+              @media print {
+                body {
+                  background-color: #fff;
+                }
+                .invoice-container {
+                  box-shadow: none;
+                  border: none;
+                }
+              }
             </style>
           </head>
           <body>
-            <h2>Receipt</h2>
-            <p>Date: ${saleData.date}</p>
-            <p>Payment Type: ${saleData.paymentType}</p>
-            <h3>Items:</h3>
-            <ul>
-              ${saleData.items.map(item => `
-                <li>${item.itemName} - Qty: ${item.quantity}, Price: ${item.price.toFixed(2)}, Total: ${item.totalPrice.toFixed(2)}</li>
-              `).join('')}
-            </ul>
-            <h4>Total Amount: ${saleData.totalAmount.toFixed(2)}</h4>
-            <h4>Discount: ${saleData.discount.toFixed(2)}</h4>
-            <h4>Net Value: ${saleData.netValue.toFixed(2)}</h4>
-            <h4>Cash Paid: ${saleData.cashPaid.toFixed(2)}</h4>
-            <h4>Balance: ${saleData.balance.toFixed(2)}</h4>
+            <div class="invoice-container">
+              <div class="header">
+                <h1>RUHUNU</h1>
+                <p>TYRE HOUSE</p>
+                <p>New Town Galnewa</p>
+                <p>Phone: 025 1111111</p>
+              </div>
+    
+              <div class="invoice-details">
+                <p><strong>Date:</strong> ${moment(saleData.date).format('YYYY-MM-DD')}</p>
+              </div>
+    
+              <table>
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>Unit Price</th>
+                    <th>Qty</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemRows}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3" class="total">TOTAL</td>
+                    <td>Rs. ${saleData.totalAmount.toFixed(2)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+    
+              <div class="summary">
+                <div>
+                  <strong>Total:</strong>
+                  <strong>Discount:</strong>
+                  <strong>Net Total:</strong>
+                  <strong>Cash Paid:</strong>
+                  <strong>Balance:</strong>
+                </div>
+                <div class="value">
+                  <span>Rs. ${saleData.totalAmount.toFixed(2)}</span>
+                  <span>Rs. ${saleData.discount.toFixed(2)}</span>
+                  <span>Rs. ${saleData.netValue.toFixed(2)}</span>
+                  <span>Rs. ${saleData.cashPaid.toFixed(2)}</span>
+                  <span>Rs. ${saleData.balance.toFixed(2)}</span>
+                </div>
+              </div>
+    
+              <div class="thank-you">Thank You!</div>
+            </div>
           </body>
         </html>
       `);
+    
       printWindow.document.close();
       printWindow.print();
     };
+    
+    
 
     const handleRemoveItem = (itemCode) => {
       confirm({
@@ -364,7 +507,7 @@ function POS() {
       <Card className="mb-4 p-1 bg-gray-50 rounded-md shadow-md">
         <Row gutter={16}>
           <Col span={8}>
-            <Form form={form} layout="inline">
+            <Form form={form} layout="inline" className='mb-2'>
               <Form.Item name="itemCode" label="Item Code">
                 <Input 
                   placeholder="Enter item code" 
@@ -378,36 +521,52 @@ function POS() {
           </Col>
           {currentItem && (
             <Card className="bg-white">
-              <Form form={form} layout="inline">
-                <Form.Item name="itemName" label="Item Name">
-                  <Input value={currentItem.itemName} readOnly />
-                </Form.Item>
-                <Form.Item name="retailPrice" label="Retail Price">
-                  <InputNumber min={0} />
-                </Form.Item>
-                <Form.Item name="quantity" label="Quantity">
-                  <InputNumber 
-                    id="quantity-input" // Set ID to focus on it later
-                    min={1} 
-                    onChange={(value) => handlePriceChange(value, form.getFieldValue('retailPrice'))} 
-                    onKeyDown={handleKeyDown} // Add key down handler
-                  />
-                </Form.Item>
-                <Form.Item label="Discount">
-                  <Radio.Group value={discountType} onChange={(e) => setDiscountType(e.target.value)}>
-                    <Radio value="percentage">Percentage</Radio>
-                    <Radio value="currency">Currency</Radio>
-                  </Radio.Group>
-                  <InputNumber min={0} />
-                </Form.Item>
-                <Form.Item label="Price">
-                  <InputNumber readOnly value={form.getFieldValue('price')} />
-                </Form.Item>
-                <Button type="primary" onClick={handleAddItem}>
-                  Add to Cart
-                </Button>
-              </Form>
-            </Card>
+            <Form form={form} layout="inline">
+              {/* Item Name with increased size */}
+              <Form.Item name="itemName" label="Item Name">
+                <Input value={currentItem.itemName} readOnly style={{ width: '350px' }} />
+              </Form.Item>
+          
+              {/* Current Stock Label */}
+              <Form.Item label="Current Stock">
+                <Input value={currentItem.currentStock} readOnly style={{ width: '50px' }} />
+              </Form.Item>
+          
+              {/* Quantity with decreased size */}
+              <Form.Item name="quantity" label="Quantity">
+                <InputNumber
+                  id="quantity-input" // Set ID to focus on it later
+                  min={1}
+                  onChange={(value) => handlePriceChange(value, form.getFieldValue('retailPrice'))}
+                  onKeyDown={handleKeyDown} // Add key down handler
+                  style={{ width: '50px' }} // Decreased width
+                />
+              </Form.Item>
+          
+              {/* Discount with icons for percentage and currency */}
+              <Form.Item label="Discount">
+                <Radio.Group value={discountType} onChange={(e) => setDiscountType(e.target.value)}>
+                  <Radio value="percentage">
+                    <PercentageOutlined /> {/* Antd Percentage icon */}
+                  </Radio>
+                  <Radio value="currency">
+                    <DollarOutlined /> {/* Antd Dollar icon */}
+                  </Radio>
+                </Radio.Group>
+                <InputNumber min={0} />
+              </Form.Item>
+          
+              {/* Price with two decimal places */}
+              <Form.Item label="Price (Rs.)">
+                <InputNumber readOnly style={{ width: '100px' }} value={form.getFieldValue('price')?.toFixed(2)} />
+              </Form.Item>
+          
+              <Button type="primary" onClick={handleAddItem}>
+                Add to Cart
+              </Button>
+            </Form>
+          </Card>
+          
           )}
         </Row>
       </Card>
@@ -430,60 +589,60 @@ function POS() {
         <Divider />
 
         {/* Payment Section */}
-  <Card className="p-1 mt-1">
-    <Row gutter={16} justify="end"> {/* Align items to the right */}
-      <Col span={24}>
-        <Form layout="inline"> {/* Use inline layout for horizontal alignment */}
-          <Form.Item label="Total Amount Rs." style={{ marginBottom: 0 }}>
-            <InputNumber 
-              value={totalAmount.toFixed(2)} 
-              readOnly 
-              style={{ width: '120px' }} // Set a fixed width for consistency
-            />
-          </Form.Item>
-          <Form.Item label="Discount % / Rs." style={{ marginBottom: 0 }}>
-            <InputNumber 
-              min={0} 
-              value={discount} 
-              onChange={setDiscount} 
-              style={{ width: '120px' }} // Same fixed width
-            />
-          </Form.Item>
-          <Form.Item label="Net Value Rs." style={{ marginBottom: 0 }}>
-            <InputNumber 
-              value={netValue.toFixed(2)} 
-              readOnly 
-              style={{ width: '120px' }} // Same fixed width
-            />
-          </Form.Item>
-          <Form.Item label="Cash Paid Rs." style={{ marginBottom: 0 }}>
-            <InputNumber 
-              value={cashPaid} 
-              min={0} 
-              onChange={handleCashPaidChange} 
-              style={{ width: '120px' }} // Same fixed width
-            />
-          </Form.Item>
-          <Form.Item label="Balance Rs." style={{ marginBottom: 0 }}>
-            <InputNumber 
-              value={balance.toFixed(2)} 
-              readOnly 
-              style={{ width: '120px' }} // Same fixed width
-            />
-          </Form.Item>
-          <Form.Item style={{ marginBottom: 0 }}>
-            <Button 
-              type="primary" 
-              onClick={handleCloseSale} 
-              disabled={items.length === 0}
-            >
-              Complete Sale
-            </Button>
-          </Form.Item>
-        </Form>
-      </Col>
-    </Row>
-  </Card>
+        <Card className="p-1 mt-1">
+          <Row gutter={16} justify="end"> {/* Align items to the right */}
+            <Col span={24}>
+              <Form layout="inline"> {/* Use inline layout for horizontal alignment */}
+                <Form.Item label="Total Amount Rs." style={{ marginBottom: 0 }}>
+                  <InputNumber 
+                    value={totalAmount.toFixed(2)} 
+                    readOnly 
+                    style={{ width: '120px' }} // Set a fixed width for consistency
+                  />
+                </Form.Item>
+                <Form.Item label="Discount % / Rs." style={{ marginBottom: 0 }}>
+                  <InputNumber 
+                    min={0} 
+                    value={discount} 
+                    onChange={setDiscount} 
+                    style={{ width: '120px' }} // Same fixed width
+                  />
+                </Form.Item>
+                <Form.Item label="Net Value Rs." style={{ marginBottom: 0 }}>
+                  <InputNumber 
+                    value={netValue.toFixed(2)} 
+                    readOnly 
+                    style={{ width: '120px' }} // Same fixed width
+                  />
+                </Form.Item>
+                <Form.Item label="Cash Paid Rs." style={{ marginBottom: 0 }}>
+                  <InputNumber 
+                    value={cashPaid} 
+                    min={0} 
+                    onChange={handleCashPaidChange} 
+                    style={{ width: '120px' }} // Same fixed width
+                  />
+                </Form.Item>
+                <Form.Item label="Balance Rs." style={{ marginBottom: 0 }}>
+                  <InputNumber 
+                    value={balance.toFixed(2)} 
+                    readOnly 
+                    style={{ width: '120px' }} // Same fixed width
+                  />
+                </Form.Item>
+                <Form.Item style={{ marginBottom: 0 }}>
+                  <Button 
+                    type="primary" 
+                    onClick={handleCloseSale} 
+                    disabled={items.length === 0}
+                  >
+                    Complete Sale
+                  </Button>
+                </Form.Item>
+              </Form>
+            </Col>
+          </Row>
+        </Card>
 
       </div>
     );
