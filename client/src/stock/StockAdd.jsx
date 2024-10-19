@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Input, Button, Form, InputNumber, notification } from 'antd';
+import { Input, Button, Form, InputNumber, notification, Upload } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 
 function StockAdd() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [itemId, setItemId] = useState(null);
   const [currentStock, setCurrentStock] = useState(0);
-  const searchInputRef = useRef(null); // For auto-focus
+  const searchInputRef = useRef(null);
 
   // Auto-focus on the search input field
   useEffect(() => {
@@ -99,6 +101,58 @@ function StockAdd() {
     }
   };
 
+  // Handle Excel file upload and processing
+  const handleFileUpload = (file) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const data = event.target.result;
+      const workbook = XLSX.read(data, { type: 'binary' });
+      const sheetName = workbook.SheetNames[0]; // Assuming we're using the first sheet
+      const sheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // Convert to array format
+
+      const headers = jsonData[0]; // Extract column headers
+      const items = jsonData.slice(1); // Extract data rows
+
+      // Iterate over each row and update the stock for each item
+      items.forEach(async (row) => {
+        const [itemCode, purchasePrice, retailPrice, newStock] = row; // Assuming these are the relevant columns
+
+        try {
+          // Fetch item by code
+          const response = await axios.get(`http://localhost:5000/api/item/view/code/${itemCode}`);
+          if (response.data) {
+            const totalStock = response.data.currentStock + newStock;
+
+            // Update stock
+            await axios.put(`http://localhost:5000/api/item/update/${response.data._id}`, {
+              currentStock: totalStock,
+              purchasePrice,
+              retailPrice
+            });
+
+            notification.success({
+              message: `Stock updated for Item Code: ${itemCode}`,
+              description: `New Stock: ${newStock}, Total Stock: ${totalStock}`
+            });
+          } else {
+            notification.error({ message: `Item with code ${itemCode} not found.` });
+          }
+        } catch (error) {
+          console.error('Error updating stock:', error);
+          notification.error({ message: `Failed to update stock for Item Code: ${itemCode}.` });
+        }
+      });
+    };
+
+    reader.onerror = (event) => {
+      notification.error({ message: 'Failed to read the Excel file.' });
+    };
+
+    reader.readAsBinaryString(file);
+    return false; // Prevent automatic upload
+  };
+
   return (
     <div className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-lg">
       <h2 className="text-2xl font-bold mb-6 text-center">Add Stocks</h2>
@@ -177,16 +231,19 @@ function StockAdd() {
           <InputNumber min={1} className="w-full rounded-md" />
         </Form.Item>
 
-        <Form.Item>
-          <Button
-            type="primary"
-            onClick={handleAddToStock}
-            disabled={loading}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-md"
-            tabIndex={0}
+        <Button type="primary" onClick={handleAddToStock} className="w-full rounded-md">
+          Add to Stock
+        </Button>
+
+        {/* Excel Upload */}
+        <Form.Item label="Upload Excel File">
+          <Upload
+            accept=".xlsx"
+            beforeUpload={handleFileUpload}
+            maxCount={1}
           >
-            Add to Stock
-          </Button>
+            <Button icon={<UploadOutlined />}>Upload Excel File</Button>
+          </Upload>
         </Form.Item>
       </Form>
     </div>
