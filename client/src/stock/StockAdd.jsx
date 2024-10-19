@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Input, Button, Form, InputNumber, notification, Upload } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import { Input, Button, Form, InputNumber, notification, Upload, Tooltip } from 'antd';
+import { UploadOutlined, DownloadOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 
@@ -37,7 +37,7 @@ function StockAdd() {
           currentStock: response.data.currentStock,
           purchasePrice: response.data.purchasePrice,
           retailPrice: response.data.retailPrice,
-          itemDiscount: response.data.itemDiscount
+          itemDiscount: response.data.itemDiscount,
         });
         setItemId(response.data._id);
         setCurrentStock(response.data.currentStock);
@@ -73,11 +73,11 @@ function StockAdd() {
         currentStock: totalStock,
         purchasePrice,
         retailPrice,
-        itemDiscount
+        itemDiscount,
       });
       notification.success({
         message: 'Stock updated successfully!',
-        description: `Item Code: ${form.getFieldValue('itemCode')}, New Stock: ${newStockValue}, Total Stock: ${totalStock}`
+        description: `Item Code: ${form.getFieldValue('itemCode')}, New Stock: ${newStockValue}, Total Stock: ${totalStock}`,
       });
       form.resetFields();
       setItemId(null);
@@ -112,6 +112,14 @@ function StockAdd() {
       const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // Convert to array format
 
       const headers = jsonData[0]; // Extract column headers
+      const expectedHeaders = ['Item Code', 'Purchase Price', 'Retail Price', 'New Stock'];
+      
+      // Validate headers
+      if (headers.length !== expectedHeaders.length || !headers.every((val, index) => val === expectedHeaders[index])) {
+        notification.error({ message: 'Invalid Excel file format. Please use the provided template.' });
+        return false;
+      }
+
       const items = jsonData.slice(1); // Extract data rows
 
       // Iterate over each row and update the stock for each item
@@ -128,12 +136,12 @@ function StockAdd() {
             await axios.put(`http://localhost:5000/api/item/update/${response.data._id}`, {
               currentStock: totalStock,
               purchasePrice,
-              retailPrice
+              retailPrice,
             });
 
             notification.success({
               message: `Stock updated for Item Code: ${itemCode}`,
-              description: `New Stock: ${newStock}, Total Stock: ${totalStock}`
+              description: `New Stock: ${newStock}, Total Stock: ${totalStock}`,
             });
           } else {
             notification.error({ message: `Item with code ${itemCode} not found.` });
@@ -215,13 +223,15 @@ function StockAdd() {
           <InputNumber min={0} className="w-full rounded-md" />
         </Form.Item>
 
-        <Form.Item
-          label="Item Discount %"
-          name="itemDiscount"
-          rules={[{ type: 'number', min: 0, max: 100, message: 'Discount must be between 0 and 100.' }]}
-        >
-          <InputNumber min={0} max={100} className="w-full rounded-md" />
-        </Form.Item>
+        <Tooltip title="Enter the discount percentage for the item.">
+          <Form.Item
+            label="Item Discount %"
+            name="itemDiscount"
+            rules={[{ type: 'number', min: 0, max: 100, message: 'Discount must be between 0 and 100.' }]}
+          >
+            <InputNumber min={0} max={100} className="w-full rounded-md" />
+          </Form.Item>
+        </Tooltip>
 
         <Form.Item
           label="New Stock"
@@ -235,15 +245,24 @@ function StockAdd() {
           Add to Stock
         </Button>
 
+        {/* Excel Template Download */}
+        <Form.Item label="Download Excel Template">
+          <a href="/path/to/excel-template.xlsx" download>
+            <Button icon={<DownloadOutlined />}>Download Template</Button>
+          </a>
+        </Form.Item>
+
         {/* Excel Upload */}
         <Form.Item label="Upload Excel File">
-          <Upload
-            accept=".xlsx"
-            beforeUpload={handleFileUpload}
-            maxCount={1}
-          >
-            <Button icon={<UploadOutlined />}>Upload Excel File</Button>
-          </Upload>
+          <Tooltip title="Ensure the Excel file matches the provided template.">
+            <Upload
+              accept=".xlsx"
+              beforeUpload={handleFileUpload}
+              maxCount={1}
+            >
+              <Button icon={<UploadOutlined />}>Upload Excel File</Button>
+            </Upload>
+          </Tooltip>
         </Form.Item>
       </Form>
     </div>
