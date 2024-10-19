@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Input, Button, Form, InputNumber, message } from 'antd';
+import React, { useState, useEffect, useRef } from 'react';
+import { Input, Button, Form, InputNumber, notification } from 'antd';
 import axios from 'axios';
 
 function StockAdd() {
@@ -7,13 +7,19 @@ function StockAdd() {
   const [loading, setLoading] = useState(false);
   const [itemId, setItemId] = useState(null);
   const [currentStock, setCurrentStock] = useState(0);
+  const searchInputRef = useRef(null); // For auto-focus
+
+  // Auto-focus on the search input field
+  useEffect(() => {
+    searchInputRef.current.focus();
+  }, []);
 
   // Fetch item details based on item code
   const handleSearch = async () => {
     const itemCode = form.getFieldValue('itemCode');
-    
+
     if (!itemCode) {
-      message.error('Please enter an item code.');
+      notification.error({ message: 'Please enter an item code.' });
       return;
     }
 
@@ -34,11 +40,11 @@ function StockAdd() {
         setItemId(response.data._id);
         setCurrentStock(response.data.currentStock);
       } else {
-        message.error('Item not found.');
+        notification.error({ message: 'Item not found.' });
       }
     } catch (error) {
       console.error('Error fetching item details:', error);
-      message.error('Failed to fetch item details. Please check the item code and try again.');
+      notification.error({ message: 'Failed to fetch item details. Please check the item code and try again.' });
     } finally {
       setLoading(false);
     }
@@ -51,12 +57,12 @@ function StockAdd() {
     const totalStock = currentStock + newStockValue;
 
     if (!itemId) {
-      message.error('Item not found. Please search for an item first.');
+      notification.error({ message: 'Item not found. Please search for an item first.' });
       return;
     }
 
     if (newStockValue <= 0) {
-      message.error('Please enter a valid stock quantity.');
+      notification.error({ message: 'Please enter a valid stock quantity.' });
       return;
     }
 
@@ -67,13 +73,17 @@ function StockAdd() {
         retailPrice,
         itemDiscount
       });
-      message.success(`Stock updated successfully! Total stock: ${totalStock}`);
+      notification.success({
+        message: 'Stock updated successfully!',
+        description: `Item Code: ${form.getFieldValue('itemCode')}, New Stock: ${newStockValue}, Total Stock: ${totalStock}`
+      });
       form.resetFields();
       setItemId(null);
       setCurrentStock(0);
+      searchInputRef.current.focus(); // Refocus search input after success
     } catch (error) {
       console.error('Error updating stock:', error);
-      message.error('Failed to update stock. Please try again.');
+      notification.error({ message: 'Failed to update stock. Please try again.' });
     }
   };
 
@@ -93,18 +103,19 @@ function StockAdd() {
     <div className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-lg">
       <h2 className="text-2xl font-bold mb-6 text-center">Add Stocks</h2>
       <Form form={form} layout="vertical" onKeyPress={handleKeyPress}>
-        <Form.Item 
-          label="Item Code" 
+        <Form.Item
+          label="Item Code"
           name="itemCode"
           rules={[{ required: true, message: 'Please enter the item code.' }]}
         >
           <div className="flex">
-            <Input 
+            <Input
               className="flex-grow rounded-l-md border-r-0 mr-36"
               disabled={loading}
+              ref={searchInputRef} // Auto-focus here
             />
-            <Button 
-              onClick={handleSearch} 
+            <Button
+              onClick={handleSearch}
               loading={loading}
               className="rounded-r-md"
               tabIndex={0}
@@ -134,32 +145,32 @@ function StockAdd() {
           <InputNumber min={0} value={currentStock} disabled className="w-full rounded-md" />
         </Form.Item>
 
-        <Form.Item 
-          label="Purchase Price Rs." 
+        <Form.Item
+          label="Purchase Price Rs."
           name="purchasePrice"
           rules={[{ type: 'number', min: 0, message: 'Purchase price cannot be negative.' }]}
         >
           <InputNumber min={0} className="w-full rounded-md" />
         </Form.Item>
 
-        <Form.Item 
-          label="Retail Price Rs." 
+        <Form.Item
+          label="Retail Price Rs."
           name="retailPrice"
           rules={[{ type: 'number', min: 0, message: 'Retail price cannot be negative.' }]}
         >
           <InputNumber min={0} className="w-full rounded-md" />
         </Form.Item>
 
-        <Form.Item 
-          label="Item Discount %" 
+        <Form.Item
+          label="Item Discount %"
           name="itemDiscount"
           rules={[{ type: 'number', min: 0, max: 100, message: 'Discount must be between 0 and 100.' }]}
         >
           <InputNumber min={0} max={100} className="w-full rounded-md" />
         </Form.Item>
 
-        <Form.Item 
-          label="New Stock" 
+        <Form.Item
+          label="New Stock"
           name="newStock"
           rules={[{ required: true, type: 'number', min: 1, message: 'Please enter a valid stock quantity.' }]}
         >
@@ -167,9 +178,9 @@ function StockAdd() {
         </Form.Item>
 
         <Form.Item>
-          <Button 
-            type="primary" 
-            onClick={handleAddToStock} 
+          <Button
+            type="primary"
+            onClick={handleAddToStock}
             disabled={loading}
             className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-md"
             tabIndex={0}
