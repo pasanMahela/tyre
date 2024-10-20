@@ -1,5 +1,6 @@
 const Item = require('../models/item');
 const Counter = require('../models/Counter'); // Adjust the path as necessary
+const mongoose = require('mongoose');    // Import mongoose
 
 // Function to generate the next item code
 const generateItemCode = async () => {
@@ -104,9 +105,15 @@ exports.getItemById = async (req, res) => {
 };
 
 // Delete an item by ID
+// Delete an item by ID
 exports.deleteItem = async (req, res) => {
     try {
         const { id } = req.params;
+
+        // Check if the ID is a valid ObjectId
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ error: 'Invalid item ID' });
+        }
 
         const deletedItem = await Item.findByIdAndDelete(id);
 

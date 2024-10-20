@@ -9,7 +9,7 @@ function StockAdd() {
   const [loading, setLoading] = useState(false);
   const [itemId, setItemId] = useState(null);
   const [currentStock, setCurrentStock] = useState(0);
-  const [selectedColumns, setSelectedColumns] = useState(['Item Code']); // 'Item Code' is mandatory
+  const [selectedColumns, setSelectedColumns] = useState(['Item Code']); 
   const searchInputRef = useRef(null);
 
   const availableColumns = [
@@ -144,7 +144,7 @@ function StockAdd() {
 
   const handleColumnChange = (checkedValues) => {
     if (!checkedValues.includes('Item Code')) {
-      checkedValues.push('Item Code'); // Ensure 'Item Code' is always selected
+      checkedValues.push('Item Code');
     }
     setSelectedColumns(checkedValues);
   };
@@ -159,10 +159,9 @@ function StockAdd() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg">
+    <div className="max-w-4xl mx-auto p-6 bg-gray-100 shadow-lg rounded-lg space-y-12">
       <Row gutter={24}>
-        {/* Left Column: Form */}
-        <Col xs={24} md={12}>
+        <Col xs={24} md={12} className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold mb-6 text-center">Add Stocks Manually</h2>
           <Form form={form} layout="vertical" onKeyPress={(e) => e.key === 'Enter' && handleSearch()}>
             <Form.Item label="Item Code" name="itemCode" rules={[{ required: true, message: 'Please enter the item code.' }]}>
@@ -216,26 +215,25 @@ function StockAdd() {
           </Form>
         </Col>
 
-        {/* Right Column: Excel Upload */}
-        <Col xs={24} md={12}>
+        <Col xs={24} md={12} className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold mb-6 text-center">Add Stocks via Excel</h2>
           <Form layout="vertical">
-            <Form.Item label="Select Columns for Custom Template">
-              <Checkbox.Group options={availableColumns} defaultValue={['Item Code']} onChange={handleColumnChange} />
+            <Form.Item label="Select Columns">
+              <Checkbox.Group options={availableColumns} value={selectedColumns} onChange={handleColumnChange} />
             </Form.Item>
 
-            <Form.Item label="Download Custom Excel Template">
-              <a onClick={downloadTemplate} download>
-                <Button icon={<DownloadOutlined />}>Download Custom Template</Button>
-              </a>
-            </Form.Item>
+            <Tooltip title="Download Excel template">
+              <Button onClick={downloadTemplate} icon={<DownloadOutlined />} className="w-full mb-6 rounded-md">
+                Download Template
+              </Button>
+            </Tooltip>
 
             <Form.Item label="Upload Excel File">
-              <Tooltip title="Ensure the Excel file matches the provided template.">
-                <Upload accept=".xlsx" beforeUpload={handleFileUpload} maxCount={1}>
-                  <Button icon={<UploadOutlined />}>Upload Excel File</Button>
-                </Upload>
-              </Tooltip>
+              <Upload accept=".xlsx, .xls" beforeUpload={handleFileUpload} maxCount={1} className="w-full">
+                <Button icon={<UploadOutlined />} className="w-full rounded-md">
+                  Upload File
+                </Button>
+              </Upload>
             </Form.Item>
           </Form>
         </Col>
