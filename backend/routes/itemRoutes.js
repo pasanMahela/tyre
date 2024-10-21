@@ -20,4 +20,7 @@ router.delete('/delete/:id', itemController.deleteItem);
 // Route to get a single item by itemCode
 router.get('/view/code/:itemCode', itemController.getItemByItemCode);
 
+// Update item by itemCode
+router.put('/update/code/:itemCode', itemController.updateItemByItemCode);
+
 module.exports = router;

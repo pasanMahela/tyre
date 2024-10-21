@@ -144,3 +144,27 @@ exports.getItemByItemCode = async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch item. ' + error.message });
     }
 };
+
+// Update an item by itemCode
+exports.updateItemByItemCode = async (req, res) => {
+    try {
+        const { itemCode } = req.params; // Get itemCode from the request parameters
+        const updatedData = req.body; // Get updated data from the request body
+
+        // Find the item by itemCode and update it
+        const updatedItem = await Item.findOneAndUpdate(
+            { itemCode }, // Filter by itemCode
+            updatedData, // The new data to update
+            { new: true } // Return the updated item
+        );
+
+        if (!updatedItem) {
+            return res.status(404).json({ message: 'Item not found' });
+        }
+
+        res.status(200).json({ message: 'Item updated successfully!', item: updatedItem });
+    } catch (error) {
+        console.error('Error updating item:', error.message);
+        res.status(500).json({ error: 'Failed to update item. ' + error.message });
+    }
+};
