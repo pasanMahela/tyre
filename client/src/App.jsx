@@ -8,6 +8,7 @@ import StockView from './stock/StockView';
 import ItemEdit from './inventory/ItemEdit';
 import POS from './pages/POS';
 import UserManagement from "./pages/UserManagement ";
+import Sales from "./pages/Sales";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="/item-edit" element={<ItemEdit />} />
             <Route path="/pos" element={<POS />} />
             <Route path="/users" element={<UserManagement />} />
+            <Route path="/sales" element={<Sales />} />
           </Routes>
         </div>
         <Footer />

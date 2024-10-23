@@ -37,12 +37,16 @@ exports.createSale = async (req, res) => {
 };
 
 
+// Get all sales
 exports.getSales = async (req, res) => {
   try {
-    const sales = await Sale.find();
+    const sales = await Sale.find().sort({ date: -1 }); // Sort by date descending
+    if (!sales.length) {
+      return res.status(404).json({ message: "No sales found." });
+    }
     res.status(200).json(sales);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error fetching sales data' });
+    console.error("Error fetching sales:", error.message);
+    res.status(500).json({ message: "Error fetching sales data." });
   }
 };
