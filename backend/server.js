@@ -9,6 +9,7 @@ const itemRoutes = require('./routes/itemRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 
 const userRoutes = require('./routes/userRoutes');
+const authRoutes = require('./routes/auth');
 dotenv.config();
 
 const initializeCounter = async () => {
@@ -54,6 +55,8 @@ app.use('/api/sales', saleRoutes);
 
 // Routes
 app.use('/users', userRoutes);
+
+app.use('/api/auth', authRoutes); // Mount your auth routes
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

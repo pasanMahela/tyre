@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Input,
   Button,
@@ -24,6 +25,10 @@ const { Title, Text } = Typography;
 const { confirm } = Modal;
 
 function POS() {
+
+  const location = useLocation();
+  const [notification, setNotification] = useState('');
+  
   const [form] = Form.useForm();
   
   const [items, setItems] = useState(() => {
@@ -62,6 +67,20 @@ function POS() {
     localStorage.setItem('cashPaid', cashPaid.toString());
     localStorage.setItem('balance', balance.toString());
   }, [items, totalAmount, discount, netValue, cashPaid, balance]);
+
+  useEffect(() => {
+    // Check if the state contains a message from login
+    if (location.state?.message) {
+      setNotification(location.state.message);
+
+      // Clear the message after a few seconds
+      const timer = setTimeout(() => {
+        setNotification('');
+      }, 3000); // Show for 3 seconds
+
+      return () => clearTimeout(timer); // Cleanup timer
+    }
+  }, [location.state]);
 
   const handleSearch = async () => {
     const itemCode = form.getFieldValue('itemCode');
@@ -499,6 +518,12 @@ function POS() {
 
     return (
       <div className="container mx-auto p-10 bg-white rounded-lg shadow-lg">
+        {/* Show notification if available */}
+      {notification && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+          <span className="block sm:inline">{notification}</span>
+        </div>
+      )}
       <Title level={2} className="text-center text-indigo-600 mb-6">
         Point of Sale (POS) Interface
       </Title>

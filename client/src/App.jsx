@@ -9,6 +9,7 @@ import ItemEdit from './inventory/ItemEdit';
 import POS from './pages/POS';
 import UserManagement from "./pages/UserManagement ";
 import Sales from "./pages/Sales";
+import Login from "./pages/Login";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/pos" element={<POS />} />
             <Route path="/users" element={<UserManagement />} />
             <Route path="/sales" element={<Sales />} />
+            <Route path="/login" element={<Login />} />
           </Routes>
         </div>
         <Footer />
